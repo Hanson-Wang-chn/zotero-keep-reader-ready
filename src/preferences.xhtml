@@ -1,0 +1,27 @@
+<vbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+      xmlns:html="http://www.w3.org/1999/xhtml"
+      id="keep-reader-ready-pane"
+      onload="KeepReaderReadyPreferences.init(window)">
+  <groupbox>
+    <label><html:h2>PDF 常驻</html:h2></label>
+    <description>保留已渲染的 PDF 页面，减少切回论文时的等待。</description>
+    <checkbox id="keep-reader-ready-enabled" label="启用 PDF 页面缓存保护"/>
+    <description class="keep-reader-ready-detail">阻止阅读器因隐藏、切换桌面或切到其他标签页而主动清理页面绘图缓存。</description>
+    <checkbox id="keep-reader-ready-tabs" label="同时防止 PDF 标签页自动卸载"/>
+    <description class="keep-reader-ready-detail">适合同时阅读多篇论文。已加载的 PDF 标签页将保持加载；手动关闭标签页仍正常释放资源。</description>
+  </groupbox>
+  <groupbox>
+    <label><html:h2>运行状态</html:h2></label>
+    <description id="keep-reader-ready-status" role="status" aria-live="polite">正在读取状态…</description>
+    <description id="keep-reader-ready-version"/>
+    <description id="keep-reader-ready-errors" hidden="true"/>
+    <hbox><button id="keep-reader-ready-reapply" label="重新应用并检查"/></hbox>
+  </groupbox>
+  <groupbox>
+    <label><html:h2>使用说明</html:h2></label>
+    <description>设置立即生效，重启后会记住选择。关闭上方总开关，或在插件管理中禁用本插件，即恢复 Zotero 原有行为。</description>
+    <description>安装前已被卸载的 PDF，请先点开一次；插件不会预先打开所有论文，也不会把整篇文档的所有页面一次性渲染到内存。</description>
+    <description>内存占用会增加。窗口缩放、改变缩放比例及 PDF 阅读器自身正常的页面缓存淘汰仍可能触发重绘。</description>
+    <description>按 Zotero 10.0.6 的接口编写，目标系统为 macOS 27.0.1。未在真实 Mac 环境完成端到端实测。</description>
+  </groupbox>
+</vbox>

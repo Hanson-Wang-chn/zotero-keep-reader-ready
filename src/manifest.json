@@ -1,0 +1,15 @@
+{
+  "manifest_version": 2,
+  "name": "PDF 常驻 · Keep Reader Ready",
+  "version": "1.0.0",
+  "description": "保留后台 PDF 的页面渲染缓存，并可阻止 PDF 标签页自动卸载。为 Zotero 10.0.6 编写。",
+  "author": "Custom plugin for Haisheng Wang",
+  "icons": { "48": "icon.svg", "96": "icon.svg" },
+  "applications": {
+    "zotero": {
+      "id": "keep-reader-ready@local.invalid",
+      "strict_min_version": "10.0.6",
+      "strict_max_version": "10.0.*"
+    }
+  }
+}
