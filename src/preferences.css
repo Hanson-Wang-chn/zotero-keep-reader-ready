@@ -1,0 +1,10 @@
+#keep-reader-ready-pane description {
+  margin-block: 5px;
+  line-height: 1.55;
+}
+#keep-reader-ready-pane checkbox { margin-block: 9px 2px; }
+#keep-reader-ready-pane .keep-reader-ready-detail {
+  margin-inline-start: 25px;
+  opacity: 0.8;
+}
+#keep-reader-ready-errors { color: #b34c00; }

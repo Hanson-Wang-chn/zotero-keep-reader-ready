@@ -1,0 +1,15 @@
+name: Feature or compatibility request / 功能与兼容性建议
+description: Describe a reading workflow or a compatibility result.
+title: '[Request] '
+body:
+  - type: textarea
+    id: request
+    attributes:
+      label: Problem and proposed behavior / 问题和希望的行为
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Environment or testing evidence / 环境或测试结果
+      description: For compatibility reports, include exact Zotero/OS versions and settings tested.

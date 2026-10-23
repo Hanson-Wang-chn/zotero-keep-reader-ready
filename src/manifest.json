@@ -1,0 +1,20 @@
+{
+  "manifest_version": 2,
+  "name": "Keep Reader Ready",
+  "version": "1.2.0",
+  "description": "Retain rendered PDF pages and reduce redraws when returning to a paper.",
+  "author": "Keep Reader Ready contributors",
+  "icons": {
+    "48": "icon.svg",
+    "96": "icon.svg"
+  },
+  "applications": {
+    "zotero": {
+      "id": "keep-reader-ready@local.invalid",
+      "update_url": "https://raw.githubusercontent.com/Hanson-Wang-chn/zotero-keep-reader-ready/main/updates/en-US.json",
+      "strict_min_version": "10.0.6",
+      "strict_max_version": "10.0.*"
+    }
+  },
+  "homepage_url": "https://github.com/Hanson-Wang-chn/zotero-keep-reader-ready"
+}

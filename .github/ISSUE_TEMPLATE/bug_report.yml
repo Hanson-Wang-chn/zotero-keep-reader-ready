@@ -1,0 +1,38 @@
+name: Bug report / 问题反馈
+description: Report a reproducible problem with retention, rendering, or installation.
+title: '[Bug] '
+labels: [bug]
+body:
+  - type: input
+    id: versions
+    attributes:
+      label: Plugin version and language / 插件版本和语言
+      placeholder: 1.2.0 en-US or 1.1.1 zh-CN
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Zotero version and OS / Zotero 版本与系统
+      placeholder: Zotero 10.0.6, macOS 27.0.1
+    validations:
+      required: true
+  - type: textarea
+    id: settings
+    attributes:
+      label: Enabled settings / 已启用的设置
+      description: Include master protection, tab protection, retention, and preloading.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps, expected behavior and actual behavior / 复现步骤及预期、实际表现
+      description: Include whether switching desktops, tabs, zooming or editing preceded the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Settings diagnostics / 设置中的检查结果
+      description: Redact private metadata. A public test PDF link is helpful; a private paper is not required.

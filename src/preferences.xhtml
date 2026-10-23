@@ -1,0 +1,36 @@
+<vbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+      xmlns:html="http://www.w3.org/1999/xhtml"
+      id="keep-reader-ready-pane"
+      onload="KeepReaderReadyPreferences.init(window)">
+  <groupbox>
+    <label><html:h2>{{paneTitle}}</html:h2></label>
+    <description>{{intro}}</description>
+    <checkbox id="keep-reader-ready-enabled" label="{{enabledLabel}}"/>
+    <description class="keep-reader-ready-detail">{{enabledHelp}}</description>
+    <checkbox id="keep-reader-ready-tabs" label="{{tabsLabel}}"/>
+    <description class="keep-reader-ready-detail">{{tabsHelp}}</description>
+    <checkbox id="keep-reader-ready-cache" label="{{cacheLabel}}"/>
+    <description class="keep-reader-ready-detail">{{cacheHelp}}</description>
+    <checkbox id="keep-reader-ready-preload" label="{{preloadLabel}}"/>
+    <description class="keep-reader-ready-detail">{{preloadHelp}}</description>
+  </groupbox>
+  <groupbox>
+    <label><html:h2>{{statusHeading}}</html:h2></label>
+    <description id="keep-reader-ready-status" role="status" aria-live="polite">{{readingStatus}}</description>
+    <description id="keep-reader-ready-version"/>
+    <description id="keep-reader-ready-cache-status" role="status" aria-live="polite"/>
+    <description id="keep-reader-ready-preload-status" role="status" aria-live="polite"/>
+    <description id="keep-reader-ready-errors" hidden="true"/>
+    <hbox><button id="keep-reader-ready-reapply" label="{{reapplyLabel}}"/></hbox>
+  </groupbox>
+  <groupbox>
+    <label><html:h2>{{usageHeading}}</html:h2></label>
+    <description>{{settingsHelp}}</description>
+    <description>{{inheritHelp}}</description>
+    <description>{{preloadUsage}}</description>
+    <description>{{preloadReleaseHelp}}</description>
+    <description>{{preloadCostHelp}}</description>
+    <description>{{scaleHelp}}</description>
+    <description>{{compatHelp}}</description>
+  </groupbox>
+</vbox>

@@ -1,0 +1,2 @@
+e1e03b84311afb95f8c6e785968bb40fa7057f57cd55a8d41bf0617d2816c4b9  keep-reader-ready-1.1.0.xpi
+b851a8d0ade5f5662e5c4df6e81077a54c8aa097a63b3e45cc8851da91fe58aa  keep-reader-ready-1.1.0-source.zip
