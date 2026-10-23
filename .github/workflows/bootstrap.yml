@@ -26,7 +26,7 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git switch -C main origin/main
           git merge --allow-unrelated-histories --no-commit import-history
-          git rm -r bootstrap .github/workflows/bootstrap.yml
+          git rm -r bootstrap
           git commit -m 'Import versioned MIT plugin source and community release infrastructure'
           git push origin main --tags
       - name: Validate current source and both UI languages
