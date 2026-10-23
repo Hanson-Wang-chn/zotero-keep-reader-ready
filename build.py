@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 import xml.etree.ElementTree as ET
+from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parent
 SOURCE = ROOT / "src"
@@ -23,11 +24,25 @@ def write_archive(destination, entries):
         assert archive.testzip() is None
 
 
+def validate_manifest(manifest):
+    """Zotero adds mandatory fields beyond Firefox's basic manifest schema."""
+    app = manifest.get("applications", {}).get("zotero", {})
+    for field in ["id", "update_url", "strict_max_version"]:
+        if not app.get(field):
+            raise ValueError(f"applications.zotero.{field} not provided")
+    update = urlparse(app["update_url"])
+    if update.scheme != "https" or not update.hostname:
+        raise ValueError("update_url must be an absolute HTTPS URL")
+    if app.get("strict_min_version") != "10.0.6" or app["strict_max_version"] != "10.0.*":
+        raise ValueError("Unexpected Zotero compatibility range")
+    if manifest.get("manifest_version") != 2:
+        raise ValueError("Expected manifest_version 2")
+
+
 def main():
     manifest = json.loads((SOURCE / "manifest.json").read_text())
+    validate_manifest(manifest)
     version = manifest["version"]
-    assert manifest["applications"]["zotero"]["strict_min_version"] == "10.0.6"
-    assert manifest["applications"]["zotero"]["strict_max_version"] == "10.0.*"
     for filename in ["preferences.xhtml", "icon.svg"]:
         ET.parse(SOURCE / filename)
     for filename in ["bootstrap.js", "runtime.js", "preferences-controller.js", "prefs.js"]:
