@@ -1,0 +1,36 @@
+name: Publish releases
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to publish
+        required: true
+        default: all
+        type: choice
+        options: [all, 1.2.0, 1.1.1]
+permissions:
+  contents: write
+concurrency:
+  group: publish-releases
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: node --test tests/*.test.cjs
+      - run: python3 -m unittest discover -s tests -p 'test_*.py'
+      - name: Build tagged releases, publish assets and update channels
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: python3 scripts/publish_releases.py --version "$RELEASE_VERSION"
