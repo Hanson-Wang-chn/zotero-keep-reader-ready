@@ -1,13 +1,18 @@
 /* SPDX-License-Identifier: MIT */
 /* Retain actual PDFPageView canvases as the reader renders them. */
 var KeepReaderReadyPageCache = class KeepReaderReadyPageCache {
-  constructor({ outer, Components, L10n, isActive, onChange, onError }) {
+  constructor({ outer, Components, L10n, isActive, onChange, onError, PDFPreload, dispatch, preload = false }) {
     this.outer = outer;
     this.l10n = L10n;
     this.Components = Components;
     this.isActive = isActive;
     this.onChange = onChange;
     this.onError = onError;
+    this.PDFPreload = PDFPreload;
+    this.dispatch = dispatch;
+    this.preloadEnabled = preload;
+    this.driver = null;
+    this.preloadError = false;
     this.stopped = false;
     this.phase = "waiting";
     this.patches = [];
@@ -56,7 +61,9 @@ var KeepReaderReadyPageCache = class KeepReaderReadyPageCache {
       await app?.initializedPromise;
       if (!this.valid()) return this.stop(false);
       const viewer = app?.pdfViewer;
-      await viewer?.pagesPromise;
+      // PDFView's ready signal is sufficient: all PDFPageViews exist then.
+      // Full-document metadata fetching may still be pending; the driver
+      // explicitly loads each missing pdfPage before submitting a render.
       if (!this.valid()) return this.stop(false);
       const queue = app?.pdfRenderingQueue || viewer?.renderingQueue;
       if (!viewer?._pages?.length || typeof view._trimPageBuffer !== "function"
@@ -68,6 +75,7 @@ var KeepReaderReadyPageCache = class KeepReaderReadyPageCache {
       this.win = win;
       this.viewer = viewer;
       this.queue = queue;
+      this.app = app;
       const gate = this.gate;
 
       // PDF.js's private page buffer cannot be resized from a plugin. Keep
@@ -107,6 +115,7 @@ var KeepReaderReadyPageCache = class KeepReaderReadyPageCache {
         win.removeEventListener("unload", close);
       });
       this.phase = "ready";
+      this.setPreload(this.preloadEnabled);
       this.onChange();
       return true;
     } catch (error) {
@@ -119,6 +128,30 @@ var KeepReaderReadyPageCache = class KeepReaderReadyPageCache {
     }
   }
 
+  setPreload(enabled) {
+    this.preloadEnabled = Boolean(enabled);
+    if (!enabled) {
+      this.driver?.stop();
+      this.driver = null;
+      this.preloadError = false;
+    } else if (this.phase === "ready" && !this.stopped && !this.driver) {
+      try {
+        if (!this.PDFPreload || typeof this.dispatch !== "function") {
+          throw new Error(this.l10n.t("errorPreloadMissing"));
+        }
+        this.driver = new this.PDFPreload(this);
+        this.driver.start();
+        this.preloadError = false;
+      } catch (error) {
+        this.driver?.stop();
+        this.driver = null;
+        this.preloadError = true;
+        this.onError(error);
+      }
+    }
+    this.onChange();
+  }
+
   getStatus() {
     const pages = this.viewer?._pages || [];
     let ready = 0;
@@ -127,13 +160,18 @@ var KeepReaderReadyPageCache = class KeepReaderReadyPageCache {
     }
     return {
       phase: this.phase,
-      ready, total: pages.length, failed: this.failures.size
+      ready, total: pages.length, failed: this.failures.size,
+      preloadPhase: this.preloadError || this.phase === "failed" ? "failed" :
+        this.phase === "waiting" ? "waiting" :
+        ready === pages.length && pages.length ? "complete" : "running"
     };
   }
 
   stop(release = true) {
     if (this.stopped) return;
     this.stopped = true;
+    this.driver?.stop();
+    this.driver = null;
     this.gate.active = false;
     for (const remove of this.events.splice(0)) {
       try { remove(); } catch (_) {}

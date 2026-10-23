@@ -14,7 +14,7 @@ for (const locale of ['zh-CN', 'en-US']) test(locale + ' preferences controls up
   await env.settle();
   env.Zotero.KeepReaderReady = env.manager;
   const names = [
-    'pane', 'enabled', 'tabs', 'cache', 'cache-status', 'reapply', 'status', 'version', 'errors'
+    'pane', 'enabled', 'tabs', 'cache', 'cache-status', 'preload', 'preload-status', 'reapply', 'status', 'version', 'errors'
   ];
   const elements = Object.fromEntries(names.map(name => ['keep-reader-ready-' + name, {
     attributes: {}, isConnected: true, listeners: {},
@@ -35,6 +35,16 @@ for (const locale of ['zh-CN', 'en-US']) test(locale + ' preferences controls up
   const cache = elements['keep-reader-ready-cache'];
   assert.equal(master.checked, true);
   assert.equal(cache.checked, false);
+  const preload = elements['keep-reader-ready-preload'];
+  assert.equal(preload.checked, false);
+  preload.checked = true;
+  preload.listeners.command();
+  assert.equal(env.manager.preloadWholePDF, true);
+  assert.equal(env.manager.retainBrowsedPages, false);
+  assert.equal(env.values.get('extensions.zotero.keepReaderReady.eagerRenderWholePDF'), true);
+  preload.checked = false;
+  preload.listeners.command();
+  assert.equal(env.manager.preloadWholePDF, false);
   assert.match(elements['keep-reader-ready-status'].textContent, /1 \/ 1/);
   master.checked = false;
   master.listeners.command();

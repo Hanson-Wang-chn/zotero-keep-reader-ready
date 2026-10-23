@@ -9,10 +9,12 @@ async function startup({ id, version, rootURI }) {
   runtimeScope = { Zotero, Services, Components };
   Services.scriptloader.loadSubScript(rootURI + "locale-data.js", runtimeScope);
   Services.scriptloader.loadSubScript(rootURI + "l10n.js", runtimeScope);
+  Services.scriptloader.loadSubScript(rootURI + "pdf-preload.js", runtimeScope);
   Services.scriptloader.loadSubScript(rootURI + "page-cache.js", runtimeScope);
   Services.scriptloader.loadSubScript(rootURI + "runtime.js", runtimeScope);
   runtime = new runtimeScope.KeepReaderReadyRuntime({
-    Zotero, Services, Components, L10n: runtimeScope.KeepReaderReadyL10n, PageCache: runtimeScope.KeepReaderReadyPageCache
+    Zotero, Services, Components, L10n: runtimeScope.KeepReaderReadyL10n, PageCache: runtimeScope.KeepReaderReadyPageCache,
+    PDFPreload: runtimeScope.KeepReaderReadyPDFPreload
   });
   runtime.start();
   Zotero.KeepReaderReady = runtime;

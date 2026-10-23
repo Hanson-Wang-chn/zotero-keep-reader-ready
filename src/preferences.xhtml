@@ -11,12 +11,15 @@
     <description class="keep-reader-ready-detail">{{tabsHelp}}</description>
     <checkbox id="keep-reader-ready-cache" label="{{cacheLabel}}"/>
     <description class="keep-reader-ready-detail">{{cacheHelp}}</description>
+    <checkbox id="keep-reader-ready-preload" label="{{preloadLabel}}"/>
+    <description class="keep-reader-ready-detail">{{preloadHelp}}</description>
   </groupbox>
   <groupbox>
     <label><html:h2>{{statusHeading}}</html:h2></label>
     <description id="keep-reader-ready-status" role="status" aria-live="polite">{{readingStatus}}</description>
     <description id="keep-reader-ready-version"/>
     <description id="keep-reader-ready-cache-status" role="status" aria-live="polite"/>
+    <description id="keep-reader-ready-preload-status" role="status" aria-live="polite"/>
     <description id="keep-reader-ready-errors" hidden="true"/>
     <hbox><button id="keep-reader-ready-reapply" label="{{reapplyLabel}}"/></hbox>
   </groupbox>
@@ -24,7 +27,9 @@
     <label><html:h2>{{usageHeading}}</html:h2></label>
     <description>{{settingsHelp}}</description>
     <description>{{inheritHelp}}</description>
-    <description>{{releaseHelp}}</description>
+    <description>{{preloadUsage}}</description>
+    <description>{{preloadReleaseHelp}}</description>
+    <description>{{preloadCostHelp}}</description>
     <description>{{scaleHelp}}</description>
     <description>{{compatHelp}}</description>
   </groupbox>

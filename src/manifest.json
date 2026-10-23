@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Keep Reader Ready",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Retain rendered PDF pages and reduce redraws when returning to a paper.",
   "author": "Keep Reader Ready contributors",
   "icons": {

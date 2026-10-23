@@ -72,11 +72,14 @@ test('legacy 1.1 checkbox value is inherited by the renamed retention option', a
 test('cancel pending initialization and roll back partial patch errors', async () => {
   const env = makeEnvironment();
   const pdf = makePDF(env, { delayed: true });
+  let resolveOuter;
+  pdf.outer._initPromise = new Promise(resolve => { resolveOuter = resolve; });
   const job = pdf.create();
   const starting = job.start();
   await env.settle();
   job.stop();
   pdf.ready();
+  resolveOuter();
   await starting;
   assert.deepEqual(pdf.order, []);
   const second = makePDF(env);

@@ -1,12 +1,13 @@
 /* SPDX-License-Identifier: MIT */
 /* No network, database writes, idle loops, or periodic keep-alive timers. */
 var KeepReaderReadyRuntime = class KeepReaderReadyRuntime {
-  constructor({ Zotero, Services, Components, L10n, PageCache }) {
+  constructor({ Zotero, Services, Components, L10n, PageCache, PDFPreload }) {
     this.Zotero = Zotero;
     this.l10n = L10n;
     this.Services = Services;
     this.Components = Components;
     this.PageCache = PageCache;
+    this.PDFPreload = PDFPreload;
     this.cacheRecords = new WeakMap();
     this.branch = "extensions.zotero.keepReaderReady.";
     this.alive = false;
@@ -29,14 +30,18 @@ var KeepReaderReadyRuntime = class KeepReaderReadyRuntime {
   }
 
   get retainBrowsedPages() {
-    // Keep 1.1's stored checkbox value; its user-facing name now describes
-    // retaining pages already rendered by the reader.
+    // Preserve 1.1's existing checkbox value independently of the new eager
+    // rendering preference introduced in 1.2.
     return this.Services.prefs.getBoolPref(this.branch + "preloadWholePDF", false);
   }
 
+  get preloadWholePDF() {
+    return this.Services.prefs.getBoolPref(this.branch + "eagerRenderWholePDF", false);
+  }
+
   setOption(name, value) {
-    if (!["enabled", "keepTabsLoaded", "retainBrowsedPages"].includes(name)) throw new Error(this.l10n.t("errorUnknownOption"));
-    this.Services.prefs.setBoolPref(this.branch + (name === "retainBrowsedPages" ? "preloadWholePDF" : name), Boolean(value));
+    if (!["enabled", "keepTabsLoaded", "retainBrowsedPages", "preloadWholePDF"].includes(name)) throw new Error(this.l10n.t("errorUnknownOption"));
+    this.Services.prefs.setBoolPref(this.branch + (name === "retainBrowsedPages" ? "preloadWholePDF" : name === "preloadWholePDF" ? "eagerRenderWholePDF" : name), Boolean(value));
   }
 
   report(error) {
@@ -146,7 +151,7 @@ var KeepReaderReadyRuntime = class KeepReaderReadyRuntime {
       if (!this.alive || !this.enabled || outer._isUninitialized
           || !this.Zotero.Reader._readers.includes(outer)) return false;
       const protectedReader = this.patchReader(outer);
-      if (this.retainBrowsedPages) this.startCache(outer);
+      if (this.retainBrowsedPages || this.preloadWholePDF) this.startCache(outer);
       return protectedReader;
     } catch (error) {
       if (this.alive && !outer._isUninitialized) this.report(error);
@@ -158,16 +163,21 @@ var KeepReaderReadyRuntime = class KeepReaderReadyRuntime {
   }
 
   startCache(outer) {
-    if (!this.alive || !this.enabled || !this.retainBrowsedPages) return;
+    if (!this.alive || !this.enabled || !(this.retainBrowsedPages || this.preloadWholePDF)) return;
     const current = this.cacheRecords.get(outer);
-    if (current && !current.stopped) return;
+    if (current && !current.stopped) {
+      current.setPreload(this.preloadWholePDF);
+      return;
+    }
     if (!this.PageCache) {
       this.report(this.l10n.t("errorCacheMissing"));
       return;
     }
     const job = new this.PageCache({
       outer, Components: this.Components, L10n: this.l10n,
-      isActive: () => this.alive && this.enabled && this.retainBrowsedPages
+      PDFPreload: this.PDFPreload, preload: this.preloadWholePDF,
+      dispatch: callback => this.Services.tm.dispatchToMainThread(callback),
+      isActive: () => this.alive && this.enabled && (this.retainBrowsedPages || this.preloadWholePDF)
         && this.Zotero.Reader._readers.includes(outer),
       onChange: () => this.alive && this.emit(),
       onError: error => this.report(error)
@@ -254,8 +264,11 @@ var KeepReaderReadyRuntime = class KeepReaderReadyRuntime {
 
   refresh() {
     if (!this.alive) return;
-    if (!this.enabled || !this.retainBrowsedPages) {
+    if (!this.enabled || !(this.retainBrowsedPages || this.preloadWholePDF)) {
       for (const reader of this.Zotero.Reader._readers.slice()) this.stopCache(reader);
+    }
+    for (const reader of this.Zotero.Reader._readers.slice()) {
+      this.cacheRecords.get(reader)?.setPreload(this.enabled && this.preloadWholePDF);
     }
     if (this.enabled) this.applyToAll();
     else {
@@ -268,6 +281,7 @@ var KeepReaderReadyRuntime = class KeepReaderReadyRuntime {
   getStatus() {
     let loaded = 0, protectedReaders = 0;
     const cache = { ready: 0, total: 0, waiting: 0, documents: 0, failed: 0 };
+    const preload = { ready: 0, total: 0, waiting: 0, documents: 0, failed: 0, unavailable: 0 };
     for (const outer of this.Zotero.Reader._readers) {
       if (outer.type !== "pdf" || outer._isUninitialized) continue;
       loaded++;
@@ -280,6 +294,14 @@ var KeepReaderReadyRuntime = class KeepReaderReadyRuntime {
         cache.total += status.total;
         cache.failed += status.failed;
         if (status.phase === "waiting") cache.waiting++;
+        if (this.preloadWholePDF) {
+          preload.documents++;
+          preload.ready += status.ready;
+          preload.total += status.total;
+          preload.failed += status.failed;
+          if (status.preloadPhase === "waiting") preload.waiting++;
+          if (status.preloadPhase === "failed") preload.unavailable++;
+        }
       }
     }
     return {
@@ -287,6 +309,8 @@ var KeepReaderReadyRuntime = class KeepReaderReadyRuntime {
       keepTabsLoaded: this.keepTabsLoaded,
       retainBrowsedPages: this.retainBrowsedPages,
       cache,
+      preloadWholePDF: this.preloadWholePDF,
+      preload,
       version: this.Zotero.version,
       loaded, protectedReaders,
       protectedWindows: [...this.windows.values()].filter(record => !!record.wrapper).length,

@@ -133,6 +133,7 @@ function makePDF(env, { count = 14, startAt = 1, delayed = false, lazy = false }
   outer._internalReader._primaryView = view;
   const create = options => new env.PageCache({
     outer, Components: env.Components, L10n: env.L10n, isActive: () => true,
+    PDFPreload: env.PDFPreload, dispatch: callback => setTimeout(callback, 0),
     onChange() {}, onError: error => env.errors.push(error.message), ...options
   });
   const complete = async id => {

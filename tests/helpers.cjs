@@ -6,11 +6,12 @@ const runtimeSource = fs.readFileSync(path.join(__dirname, '../src/runtime.js'),
 const enginePath = path.join(__dirname, '../research/zotero-engine-5802d14.js');
 const tabsPath = path.join(__dirname, '../research/zotero-tabs-10.0.6.js');
 
-function makeEnvironment({ enabled = true, keepTabsLoaded = true, retainBrowsedPages = false, locale = "zh-CN" } = {}) {
+function makeEnvironment({ enabled = true, keepTabsLoaded = true, retainBrowsedPages = false, preloadWholePDF = false, locale = "zh-CN" } = {}) {
   const values = new Map([
     ['extensions.zotero.keepReaderReady.enabled', enabled],
     ['extensions.zotero.keepReaderReady.keepTabsLoaded', keepTabsLoaded],
-    ['extensions.zotero.keepReaderReady.preloadWholePDF', retainBrowsedPages]
+    ['extensions.zotero.keepReaderReady.preloadWholePDF', retainBrowsedPages],
+    ['extensions.zotero.keepReaderReady.eagerRenderWholePDF', preloadWholePDF]
   ]);
   const observers = new Set();
   const errors = [];
@@ -39,6 +40,7 @@ function makeEnvironment({ enabled = true, keepTabsLoaded = true, retainBrowsedP
       }
     }
   };
+  Services.tm = { dispatchToMainThread: callback => setTimeout(callback, 0) };
   let exports = 0;
   const Components = { utils: { exportFunction(fn, target) {
     if (!target || target.closed) throw new Error('Dead compartment');
@@ -48,10 +50,11 @@ function makeEnvironment({ enabled = true, keepTabsLoaded = true, retainBrowsedP
   const windows = [];
   const context = vm.createContext({ Zotero, Services, Components, KeepReaderReadyLocaleData: { locale, strings: JSON.parse(fs.readFileSync(path.join(__dirname, "../locales/" + locale + ".json"), "utf8")) } });
   vm.runInContext(fs.readFileSync(path.join(__dirname, "../src/l10n.js"), "utf8"), context);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../src/pdf-preload.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../src/page-cache.js'), 'utf8'), context);
   vm.runInContext(runtimeSource, context);
   const manager = new context.KeepReaderReadyRuntime({
-    Zotero, Services, Components, L10n: context.KeepReaderReadyL10n, PageCache: context.KeepReaderReadyPageCache
+    Zotero, Services, Components, L10n: context.KeepReaderReadyL10n, PageCache: context.KeepReaderReadyPageCache, PDFPreload: context.KeepReaderReadyPDFPreload
   });
 
   function makeReader({ id = 'pdf-1', type = 'pdf', hidden = false, delayed = false } = {}) {
@@ -138,6 +141,7 @@ function makeEnvironment({ enabled = true, keepTabsLoaded = true, retainBrowsedP
   }
   return {
     manager, Zotero, Services, Components, L10n: context.KeepReaderReadyL10n, errors, windows, observers,
+    PDFPreload: context.KeepReaderReadyPDFPreload,
     PageCache: context.KeepReaderReadyPageCache,
     makeReader, makeWindow, settle, values,
     get exportCount() { return exports; },
