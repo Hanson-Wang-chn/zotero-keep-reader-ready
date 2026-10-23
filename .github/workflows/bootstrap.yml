@@ -1,0 +1,40 @@
+name: Import version history and publish
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Import the prepared Git history without rewriting remote commits
+        shell: bash
+        run: |
+          base64 --decode bootstrap/history.b64 > /tmp/project.bundle
+          git bundle verify /tmp/project.bundle
+          git fetch /tmp/project.bundle refs/heads/main:refs/heads/import-history 'refs/tags/*:refs/tags/*'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -C main origin/main
+          git merge --allow-unrelated-histories --no-commit import-history
+          git rm -r bootstrap .github/workflows/bootstrap.yml
+          git commit -m 'Import versioned MIT plugin source and community release infrastructure'
+          git push origin main --tags
+      - name: Validate current source and both UI languages
+        run: |
+          node --test tests/*.test.cjs
+          python3 -m unittest discover -s tests -p 'test_*.py'
+      - name: Publish all tagged installers, sources and update manifests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: python3 scripts/publish_releases.py --version all
