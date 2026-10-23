@@ -7,10 +7,12 @@ function uninstall() {}
 
 async function startup({ id, version, rootURI }) {
   runtimeScope = { Zotero, Services, Components };
-  Services.scriptloader.loadSubScript(rootURI + "full-preload.js", runtimeScope);
+  Services.scriptloader.loadSubScript(rootURI + "locale-data.js", runtimeScope);
+  Services.scriptloader.loadSubScript(rootURI + "l10n.js", runtimeScope);
+  Services.scriptloader.loadSubScript(rootURI + "page-cache.js", runtimeScope);
   Services.scriptloader.loadSubScript(rootURI + "runtime.js", runtimeScope);
   runtime = new runtimeScope.KeepReaderReadyRuntime({
-    Zotero, Services, Components, Preloader: runtimeScope.KeepReaderReadyPreloader
+    Zotero, Services, Components, L10n: runtimeScope.KeepReaderReadyL10n, PageCache: runtimeScope.KeepReaderReadyPageCache
   });
   runtime.start();
   Zotero.KeepReaderReady = runtime;
@@ -18,9 +20,9 @@ async function startup({ id, version, rootURI }) {
     await Zotero.PreferencePanes.register({
       pluginID: id,
       id: "keep-reader-ready-preferences",
-      label: "PDF 常驻",
+      label: runtime.l10n.t("paneTitle"),
       src: rootURI + "preferences.xhtml",
-      scripts: [rootURI + "preferences-controller.js"],
+      scripts: [rootURI + "locale-data.js", rootURI + "l10n.js", rootURI + "preferences-controller.js"],
       stylesheets: [rootURI + "preferences.css"],
       image: rootURI + "icon.svg"
     });

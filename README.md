@@ -1,105 +1,120 @@
-# PDF 常驻 · Keep Reader Ready 1.1.0
+<p align="center"><img src="src/icon.svg" width="96" alt="Keep Reader Ready" /></p>
 
-为 **macOS 27.0.1 / Zotero 10.0.6** 编写的自定义插件。保留已加载 PDF 的页面绘图缓存，减少切换应用、桌面和论文标签页时因主动回收产生的重新渲染。
+# Keep Reader Ready for Zotero
 
-交付包含可直接安装的 `.xpi` 文件。无需降级或重新安装 Zotero。
+**Keep your paper ready when you come back.** Retain rendered PDF pages, keep loaded PDF tabs available, and optionally pre-render an entire paper.
 
-**1.1.0 新增“打开后预加载整篇 PDF”勾选框，默认关闭。**勾选后按当前缩放比例逐页预渲染整篇论文，并保留实际阅读器中的页面图像；优先处理当前可见页，不自动滚动或跳页。两个原有选项及其已保存值不变。
+[简体中文](README.zh-CN.md) · [Download](https://github.com/Hanson-Wang-chn/zotero-keep-reader-ready/releases/latest) · [Changelog](CHANGELOG.md) · [Report a bug](https://github.com/Hanson-Wang-chn/zotero-keep-reader-ready/issues/new/choose)
 
-## 安装
+[![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/Hanson-Wang-chn/zotero-keep-reader-ready/actions/workflows/ci.yml/badge.svg)](https://github.com/Hanson-Wang-chn/zotero-keep-reader-ready/actions/workflows/ci.yml)
+[![Zotero](https://img.shields.io/badge/Zotero-10.0.6%20%E2%80%93%2010.0.x-red)](docs/COMPATIBILITY.md)
 
-1.0.1 已修复安装包缺少 Zotero 强制要求的 `applications.zotero.update_url` 导致安装失败的问题。更新地址使用保留的 `.invalid` 域名占位，不指向第三方更新服务；Zotero 自身的更新检查可能记录无法连接，但不影响插件功能。
+Switching desktops, applications, or PDF tabs can cause Zotero to discard page canvases or unload an inactive PDF tab. Returning to a paper can then require another render. Keep Reader Ready gives you explicit control over that tradeoff: use more memory to keep completed page drawings available.
 
-1. 下载 `keep-reader-ready-1.1.0.xpi`。不需要解压。已有 1.0.1 可直接覆盖安装，同一插件 ID 会识别为升级，无需先卸载。
-2. 在 Zotero 中打开 **工具 → 插件**。
-3. 点击右上角齿轮菜单，选择 **从文件安装插件…**，选中下载的 XPI 并确认安装。
-4. 首次安装后，建议完整退出 Zotero（Command–Q）并重新打开一次。如果此前运行过临时 JavaScript 补丁，这一步尤其有用，可以先清除旧补丁。
-5. 打开 **Zotero → 设置… → PDF 常驻**。也可用 Command–逗号打开设置。
+## Download
 
-如果下载后文件名被额外加上 `.zip` 后缀，请将名称恢复为 `keep-reader-ready-1.1.0.xpi`，再从插件管理中安装。
+Choose one language build. The language suffix selects the plugin interface; it does not change the features or your Zotero language.
 
-## 设置
+| Version | English interface | 简体中文界面 | Features |
+| --- | --- | --- | --- |
+| **1.2.0 — recommended** | [Download en-US](https://github.com/Hanson-Wang-chn/zotero-keep-reader-ready/releases/download/v1.2.0/keep-reader-ready-1.2.0-en-US.xpi) | [下载 zh-CN](https://github.com/Hanson-Wang-chn/zotero-keep-reader-ready/releases/download/v1.2.0/keep-reader-ready-1.2.0-zh-CN.xpi) | Background protection, tab retention, page retention, optional whole-PDF preloading |
+| **1.1.1** | [Download en-US](https://github.com/Hanson-Wang-chn/zotero-keep-reader-ready/releases/download/v1.1.1/keep-reader-ready-1.1.1-en-US.xpi) | [下载 zh-CN](https://github.com/Hanson-Wang-chn/zotero-keep-reader-ready/releases/download/v1.1.1/keep-reader-ready-1.1.1-zh-CN.xpi) | Background protection, tab retention, page retention as you read |
 
-| 选项 | 默认值 | 行为 |
+Release pages also include source archives and `SHA256SUMS.txt`. [All releases](https://github.com/Hanson-Wang-chn/zotero-keep-reader-ready/releases) include the original historical packages with their known limitations documented.
+
+## Install or upgrade
+
+1. Download an `.xpi` file above. Keep its `.xpi` extension.
+2. In Zotero, open **Tools → Plugins**, click the gear, and choose **Install Add-on From File…**.
+3. Select the file and follow Zotero’s installation prompts.
+4. Open **Settings → Keep Reader Ready** (Chinese build: **PDF 常驻**).
+
+Existing installations can be upgraded directly. Both languages and both current versions use the original plugin ID, `keep-reader-ready@local.invalid`, so your saved choices are preserved. Install one language build at a time. To change language, install the other build of the same release; the plugin’s settings remain associated with the same ID.
+
+The public builds use separate English and Chinese update manifests hosted in this repository. Future updates can preserve the selected interface language. The original locally distributed packages use a placeholder update URL; install a public build once to move to the public update channel. Update checks remain subject to Zotero’s own update settings.
+
+## Settings
+
+| Setting | Fresh-install default | Effect |
 | --- | --- | --- |
-| 启用 PDF 页面缓存保护 | 开启 | 阻止 PDF 因不可见而执行立即缓存清理，以及隐藏约 60 秒后的渲染暂停 |
-| 同时防止 PDF 标签页自动卸载 | 开启 | 阻止自动清理流程卸载 PDF，包括标签页数量及闲置时间引起的自动卸载 |
-| 打开后预加载整篇 PDF（增加内存占用） | 关闭 | 首屏显示后逐页预渲染，并保留主阅读视图中整篇论文的页面结果 |
+| **Enable PDF page cache protection** | On | Protects PDF canvases from cleanup and suspension triggered by hiding the reader. Master switch for the options below. |
+| **Also prevent automatic PDF tab unloading** | On | Keeps already-loaded PDF tabs loaded during automatic tab cleanup. Manual closing and unloading remain available. |
+| **Retain rendered pages as you read** | Off | Keeps completed page canvases as reading progresses, including pages that fall outside the reader’s normal cache range. |
+| **Preload the entire PDF after opening** — 1.2.0 | Off | Actively renders every page in a loaded paper’s primary reading view at its current zoom, retaining the results. Visible pages and their detail views take priority. |
 
-设置立即生效，重启后保留。主开关关闭后，后两项暂不生效，但会保留它们的选择。
+Settings apply immediately and persist across restarts. Upgrades preserve saved values. Version 1.1’s checkbox choice is retained under its more precise page-retention label. Whole-PDF preloading has its own independent setting.
 
-主开关关闭、插件禁用或插件卸载时，恢复原有处理函数。对仍处于隐藏状态的 PDF，Zotero 原来的缓存清理和暂停计时会重新开始。
+Whole-PDF preloading includes retention while active. When you turn preloading off, further proactive rendering stops. If page retention remains on, completed canvases remain cached; turning both options off restores normal cleanup of distant pages. Turning off the master switch or disabling the plugin restores the native hooks.
 
-**手动关闭或手动卸载标签页仍然正常。**其他阅读器类型不受本插件保护。
+## Using whole-PDF preloading
 
-## 全文预加载怎么用
+1. Enable **Preload the entire PDF after opening** in version 1.2.0.
+2. Open a paper, or leave an already-loaded paper open. Previously unloaded tabs need to be opened once.
+3. Stay on the first page and check **Whole-PDF preloading: X / Y page(s) rendered** in settings. The count should advance without scrolling. **Complete** means every base-page canvas has finished at the current display state.
+4. Visit a distant page to check the retained rendering. The reading position is not changed by the preloader.
 
-1. 安装 1.1.0 后，在 **设置 → PDF 常驻** 勾选 **打开后预加载整篇 PDF（增加内存占用）**。
-2. 已打开的 PDF 会立即开始预加载；此后新打开的 PDF 会自动处理。安装前已被卸载的标签页需要先点开一次。
-3. 设置页显示“全文预加载：已渲染 X / Y 页”，统计当前已加载论文的主阅读视图。页数达到总数表示当前缩放比例下的页面渲染完成。
-4. 一次只让各文档自身的正常渲染队列继续处理下一页；当前可见页及高倍缩放细节仍优先。不会通过自动滚动、后台定时唤醒或伪造可见状态实现。
-5. 缩放比例、旋转或主题变化使页面失效时，正常阅读器仍会更新页面，队列会继续预渲染尚未完成的页面。
-6. 关闭该勾选框会停止后续全文预渲染，恢复原有页面缓存淘汰，并释放额外保留的远处页面；两个原有选项不变。当前已开始的正常渲染可能完成。
-7. 如果只是想暂停全文预加载而保留缓存保护，只取消第三个勾选框，不要关闭第一个总开关。
+Counts are summed across loaded papers’ primary views. Initialization and failed pages are shown separately. Zooming, rotation, or changing visible layers can require another rendering pass. Native local detail canvases for very large or highly zoomed pages still follow the viewer’s own limits.
 
-预加载不是瞬间完成；首次打开较长论文时会增加 CPU/GPU 工作量。页面结果按当前阅读器的缩放和像素限制渲染，内存占用随页数和分辨率增加。
+## Compatibility and tradeoffs
 
-## 确认是否生效
+- **Target:** Zotero 10.0.6; the manifest accepts 10.0.6–10.0.x. Internal reader APIs may change, so other minor/major versions require verification.
+- **User-reported working:** the original Chinese 1.1.1 and 1.2.0 implementations on macOS 27.0.1. The public language packaging is checked by automated tests; additional real-device reports are welcome.
+- **Resource use:** retained canvases increase memory usage. Whole-PDF preloading adds initial CPU/GPU work and can repeat after zoom changes. No battery-life improvement is claimed or benchmarked.
+- **Lifetime:** the cache belongs to the current reading session. Closing the paper or quitting Zotero releases it. It is not a disk cache.
+- **Scope:** PDFs that have been loaded into a reader. The plugin does not open the rest of your library. macOS process scheduling and background rendering speed remain controlled by the platform.
 
-1. 打开一篇原本容易卡顿的论文，等待页面显示完成。
-2. 在“PDF 常驻”设置中确认“已保护”的数量大于 0；必要时点击“重新应用并检查”。
-3. 保持论文页面、缩放比例和窗口尺寸不变。全屏后划走，约两分钟后切回，比较空白及图片重绘现象。
-4. 关闭总开关，再重复操作做对照。
-5. 测试多标签页时，先分别点开每篇 PDF。安装前已经卸载的标签页不会被插件自动预加载。
+See [compatibility and validation](docs/COMPATIBILITY.md) for the distinction between automated checks and desktop testing.
 
-设置页统计的是“当前已加载”的阅读器，不是所有可见标签的数量。保护数量可能在打开 PDF 完成后更新。关闭标签页后若统计尚未刷新，点击“重新应用并检查”即可。
+## Troubleshooting
 
-## 实际作用与边界
+| Symptom | What to check |
+| --- | --- |
+| A PDF tab reloads after installation | Open that previously unloaded tab once; enable both the master switch and tab-unloading protection. |
+| Pages are cached only while reading | In 1.2.0, enable the separate whole-PDF option to actively render unread pages. Page retention follows reading progress. |
+| Preloading progress stays at zero | Open a PDF, allow initialization, and use **Reapply and check**. Read the diagnostics shown in settings. Include those messages in a bug report. |
+| Progress stops below the total | Check initialization and failed-page counts. Try a second PDF and report whether zooming or switching readers preceded the stop. |
+| Memory grows too large | Turn off whole-PDF preloading, turn off page retention if needed, or close papers you have finished reading. |
+| A page redraws after zooming or editing | Its old canvas corresponds to a different page state; the viewer redraws the affected pages. |
+| UI language is unexpected | Check whether the installed filename ends in `en-US.xpi` or `zh-CN.xpi`. Install the preferred language build. |
 
-- 处理的是 Zotero 主动进行的“不可见后释放绘图缓存”和“标签页自动卸载”。
-- 使用事件及阅读器初始化回调，不通过定时器不断唤醒 Zotero，也不伪造可见状态。
-- 插件核心逻辑不访问网络，不读写文献数据库、PDF 或批注，仅保存三个本地设置。此定制版没有在线更新服务，后续需手动安装新版。
-- 不修改 Zotero 安装包、macOS 设置、App Nap、图形加速或系统内存管理。
-- 未勾选全文预加载时，保持 1.0.1 的行为。勾选后，主阅读视图的整篇页面会逐页预渲染，并绕过缓存淘汰导致的销毁；缩放、窗口尺寸、主题变化、进程退出或系统内存压力仍可能导致重绘。不会把文献库里尚未打开的论文加载进内存。
-- 内存使用会增加。关闭论文标签即可照常释放相应阅读器；也可以随时关闭保护。
-- 无法保证所有卡顿消失，也没有测量真实 Mac 上的耗电差异。
+## Privacy
 
-## 验证范围
+The plugin does not upload PDFs, page text, annotations, or library metadata. Its code makes no document-related network requests or database changes. It stores its own Boolean preferences. Zotero may contact GitHub for the configured plugin update manifests and release downloads.
 
-按 Zotero **10.0.6** 的固定版本源码及其阅读器子模块核对了接口；在 Node.js 中运行自动行为测试，并使用该版本实际的可见性处理和自动卸载函数作为测试对照。全文预加载还使用 Zotero 10.0.6 的实际 PDF.js 渲染队列作对照，验证全页渲染、可见页优先、缓存保留、停止/恢复、手动删页和文档销毁等行为。新增安装清单回归测试：复现旧包缺少必填字段的安装拒绝，并检查新包通过该项校验。测试覆盖已有、新建和延迟初始化的阅读器、原有 60 秒暂停逻辑、开关恢复、插件卸载清理、原始返回值、其他插件包裹函数、其他文档类型及设置页控制。
+## Development
 
-**尚未在真实 macOS 27.0.1 / Zotero 10.0.6 环境中完成插件安装、XUL 设置页和 Firefox 跨隔离区调用的端到端实测。**这些环境相关部分不能由 Node 模拟测试替代。遇到安装或运行问题，请保留错误原文，或提供“PDF 常驻”设置页的运行状态。
+Requirements: **Node.js 22+** and **Python 3.12+**. No npm or Python packages are required.
 
-manifest 安装范围为 Zotero 10.0.6 至 10.0.x。使用内部接口，未来 Zotero 更新可能需要重新适配。若接口不可用，会跳过对应补丁并在设置页给出检查结果。
-
-## 撤销
-
-在设置页关闭总开关即可恢复原有行为。也可以在 **工具 → 插件** 中禁用或移除“PDF 常驻 · Keep Reader Ready”。如其他插件也修改同一内部方法，完整退出再启动可确保所有运行时修改被清除。
-
-## 源码与构建
-
-只需要 Python 3 和 Node.js，无 npm 依赖。
-
-```bash
+```sh
+git clone https://github.com/Hanson-Wang-chn/zotero-keep-reader-ready.git
+cd zotero-keep-reader-ready
 node --test tests/*.test.cjs
-python3 build.py
+python3 -m unittest discover -s tests -p 'test_*.py'
+python3 build.py                         # Both languages + source ZIP + checksums
+python3 build.py --locale en-US          # English XPI + source ZIP
+python3 build.py --locale zh-CN          # Chinese XPI + source ZIP
 ```
 
-输出在 `dist/`：安装包和包含源码、说明、测试的 ZIP。
+Artifacts are written to `dist/`. Builds have fixed ZIP metadata. Build tests compare executable files across language packages and check archive structure, localization, checksums, and repeatable output.
 
-`src/runtime.js` 是核心逻辑；`src/full-preload.js` 是新增全文预渲染与保留逻辑；`src/bootstrap.js` 负责插件生命周期；`src/preferences*` 是设置页；`src/prefs.js` 提供默认设置。
+| Path | Purpose |
+| --- | --- |
+| `src/runtime.js` | Reader lifecycle, visibility hooks, automatic-tab-unloading guard, preferences |
+| `src/page-cache.js` | Retention of the reader’s actual PDF page canvases |
+| `src/pdf-preload.js` — 1.2.0 | Explicit page acquisition and event-driven rendering through the native queue |
+| `src/l10n.js`, `locales/` | Shared translation helper and English/Chinese catalogs |
+| `build.py` | Dependency-free localized XPI and source-archive builder |
+| `tests/` | Runtime, UI, localization, packaging, and rendering-queue model tests |
+| `scripts/publish_releases.py` | Tagged release publication and language-specific update manifests |
+| `docs/` | Architecture, validation, maintenance and release instructions |
 
-开发时的源码核对文件未打包到源码 ZIP。测试在这些固定版本源文件存在时会直接使用原始函数；否则使用语义等价的最小模拟。需要自行做固定版本对照时，可将官方原始文件放入 `research/` 下，并使用测试辅助脚本中列出的文件名。
+Historical tags preserve the early source snapshots. `v1.1.1` and `v1.2.0` contain the community language builds for their respective feature sets. Historical imports are explicitly labeled; commit timestamps are import times, not invented development dates.
 
-## 源码依据
+## Contributing
 
-- Zotero 10 插件兼容性：https://www.zotero.org/support/dev/zotero_10_for_developers
-- 插件生命周期和设置页：https://www.zotero.org/support/dev/zotero_7_for_developers
-- Zotero 10.0.6 阅读器：https://github.com/zotero/zotero/blob/10.0.6/chrome/content/zotero/xpcom/reader.js
-- Zotero 10.0.6 标签页：https://github.com/zotero/zotero/blob/10.0.6/chrome/content/zotero/tabs.js
-- Zotero 10.0.6 使用的阅读器提交：`5802d14a76552e10000124d2431e352e92054f01`
-- 阅读器可见性处理：https://github.com/zotero/reader/blob/5802d14a76552e10000124d2431e352e92054f01/src/common/reader.js
+Bug reports, translations, compatibility checks and focused pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). For a useful report, include Zotero/plugin versions, OS, interface language, enabled options, reproduction steps, and settings diagnostics. You can use a public test PDF instead of uploading a private paper.
 
-1.0.1 的安装成功已由用户反馈确认；1.1.0 新功能尚未在用户的 Mac 上实测。
+## License and acknowledgments
 
-这是按用户需求编写的自定义插件，不是 Zotero 官方发布的产品。许可证：MIT。
+[MIT](LICENSE). Independent community plugin; not an official Zotero project. Zotero and PDF.js are their respective projects’ names. The plugin was developed with AI assistance and human testing. Its own code is MIT-licensed; upstream source is referenced for API research, not bundled as plugin code. See [architecture and upstream references](docs/ARCHITECTURE.md).

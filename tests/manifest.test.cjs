@@ -46,7 +46,7 @@ from build import validate_manifest
 manifest = json.load(sys.stdin)
 validate_manifest(manifest)
 `;
-  const run = value => spawnSync('python3', ['-c', script], {
+  const run = value => spawnSync(process.env.PYTHON || 'python3', ['-c', script], {
     cwd: root, input: JSON.stringify(value), encoding: 'utf8'
   });
   assert.equal(run(manifest).status, 0);

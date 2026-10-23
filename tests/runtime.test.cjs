@@ -296,5 +296,5 @@ test('open errors reach the caller and do not leave an unhandled rejection', asy
 
 test('invalid setting keys are rejected', async () => {
   const env = await fixture();
-  assert.throws(() => env.manager.setOption('unrelated.pref', true), /Unknown option/);
+  assert.throws(() => env.manager.setOption('unrelated.pref', true), /未知设置项/);
 });

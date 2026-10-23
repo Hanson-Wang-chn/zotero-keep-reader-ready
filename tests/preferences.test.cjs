@@ -5,8 +5,8 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { makeEnvironment } = require('./helpers.cjs');
 
-test('preferences controls update real runtime options and live status', async () => {
-  const env = makeEnvironment();
+for (const locale of ['zh-CN', 'en-US']) test(locale + ' preferences controls update runtime options and live status', async () => {
+  const env = makeEnvironment({ locale });
   const reader = env.makeReader();
   env.Zotero.Reader._readers.push(reader);
   env.makeWindow([reader]);
@@ -14,7 +14,7 @@ test('preferences controls update real runtime options and live status', async (
   await env.settle();
   env.Zotero.KeepReaderReady = env.manager;
   const names = [
-    'pane', 'enabled', 'tabs', 'preload', 'preload-status', 'reapply', 'status', 'version', 'errors'
+    'pane', 'enabled', 'tabs', 'cache', 'cache-status', 'reapply', 'status', 'version', 'errors'
   ];
   const elements = Object.fromEntries(names.map(name => ['keep-reader-ready-' + name, {
     attributes: {}, isConnected: true, listeners: {},
@@ -27,21 +27,21 @@ test('preferences controls update real runtime options and live status', async (
     listeners: {},
     addEventListener(type, callback) { this.listeners[type] = callback; }
   };
-  const context = vm.createContext({ Zotero: env.Zotero, window: win });
+  const context = vm.createContext({ Zotero: env.Zotero, window: win, KeepReaderReadyL10n: env.L10n });
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../src/preferences-controller.js'), 'utf8'), context);
   win.KeepReaderReadyPreferences.init(win);
   const master = elements['keep-reader-ready-enabled'];
   const tabs = elements['keep-reader-ready-tabs'];
-  const preload = elements['keep-reader-ready-preload'];
+  const cache = elements['keep-reader-ready-cache'];
   assert.equal(master.checked, true);
-  assert.equal(preload.checked, false);
+  assert.equal(cache.checked, false);
   assert.match(elements['keep-reader-ready-status'].textContent, /1 \/ 1/);
   master.checked = false;
   master.listeners.command();
   assert.equal(env.manager.enabled, false);
   assert.equal(tabs.disabled, true);
-  assert.equal(preload.disabled, true);
-  assert.match(elements['keep-reader-ready-status'].textContent, /已关闭/);
+  assert.equal(cache.disabled, true);
+  assert.match(elements['keep-reader-ready-status'].textContent, /已关闭|Off/);
   master.checked = true;
   master.listeners.command();
   await env.settle();
@@ -49,12 +49,12 @@ test('preferences controls update real runtime options and live status', async (
   tabs.checked = false;
   tabs.listeners.command();
   assert.equal(env.manager.keepTabsLoaded, false);
-  preload.checked = true;
-  preload.listeners.command();
-  assert.equal(env.manager.preloadWholePDF, true);
-  preload.checked = false;
-  preload.listeners.command();
-  assert.equal(env.manager.preloadWholePDF, false);
+  cache.checked = true;
+  cache.listeners.command();
+  assert.equal(env.manager.retainBrowsedPages, true);
+  cache.checked = false;
+  cache.listeners.command();
+  assert.equal(env.manager.retainBrowsedPages, false);
   await elements['keep-reader-ready-reapply'].listeners.command();
   assert.equal(env.manager.getStatus().protectedReaders, 1);
   assert.equal(env.manager.listeners.size, 1);
@@ -71,7 +71,9 @@ test('bootstrap registers settings, cleans up on disable and rolls back registra
   const registrations = [];
   env.Zotero.PreferencePanes = { register: async options => registrations.push(options) };
   env.Services.scriptloader = { loadSubScript(uri, scope) {
-    vm.runInNewContext(fs.readFileSync(uri.replace('file://', ''), 'utf8'), scope);
+    if (uri.endsWith('locale-data.js')) {
+      scope.KeepReaderReadyLocaleData = { locale: 'zh-CN', strings: JSON.parse(fs.readFileSync(path.join(root, '../locales/zh-CN.json'), 'utf8')) };
+    } else vm.runInNewContext(fs.readFileSync(uri.replace('file://', ''), 'utf8'), scope);
   }};
   const context = vm.createContext({ Zotero: env.Zotero, Services: env.Services, Components: env.Components });
   vm.runInContext(bootstrap, context);

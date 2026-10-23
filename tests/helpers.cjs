@@ -6,11 +6,11 @@ const runtimeSource = fs.readFileSync(path.join(__dirname, '../src/runtime.js'),
 const enginePath = path.join(__dirname, '../research/zotero-engine-5802d14.js');
 const tabsPath = path.join(__dirname, '../research/zotero-tabs-10.0.6.js');
 
-function makeEnvironment({ enabled = true, keepTabsLoaded = true, preloadWholePDF = false } = {}) {
+function makeEnvironment({ enabled = true, keepTabsLoaded = true, retainBrowsedPages = false, locale = "zh-CN" } = {}) {
   const values = new Map([
     ['extensions.zotero.keepReaderReady.enabled', enabled],
     ['extensions.zotero.keepReaderReady.keepTabsLoaded', keepTabsLoaded],
-    ['extensions.zotero.keepReaderReady.preloadWholePDF', preloadWholePDF]
+    ['extensions.zotero.keepReaderReady.preloadWholePDF', retainBrowsedPages]
   ]);
   const observers = new Set();
   const errors = [];
@@ -46,11 +46,12 @@ function makeEnvironment({ enabled = true, keepTabsLoaded = true, preloadWholePD
     return function (...args) { return Reflect.apply(fn, this, args); };
   }}};
   const windows = [];
-  const context = vm.createContext({ Zotero, Services, Components });
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '../src/full-preload.js'), 'utf8'), context);
+  const context = vm.createContext({ Zotero, Services, Components, KeepReaderReadyLocaleData: { locale, strings: JSON.parse(fs.readFileSync(path.join(__dirname, "../locales/" + locale + ".json"), "utf8")) } });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, "../src/l10n.js"), "utf8"), context);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../src/page-cache.js'), 'utf8'), context);
   vm.runInContext(runtimeSource, context);
   const manager = new context.KeepReaderReadyRuntime({
-    Zotero, Services, Components, Preloader: context.KeepReaderReadyPreloader
+    Zotero, Services, Components, L10n: context.KeepReaderReadyL10n, PageCache: context.KeepReaderReadyPageCache
   });
 
   function makeReader({ id = 'pdf-1', type = 'pdf', hidden = false, delayed = false } = {}) {
@@ -136,8 +137,8 @@ function makeEnvironment({ enabled = true, keepTabsLoaded = true, preloadWholePD
     for (let i = 0; i < 8; i++) await Promise.resolve();
   }
   return {
-    manager, Zotero, Services, Components, errors, windows, observers,
-    Preloader: context.KeepReaderReadyPreloader,
+    manager, Zotero, Services, Components, L10n: context.KeepReaderReadyL10n, errors, windows, observers,
+    PageCache: context.KeepReaderReadyPageCache,
     makeReader, makeWindow, settle, values,
     get exportCount() { return exports; },
     realPinnedSource: fs.existsSync(enginePath) && fs.existsSync(tabsPath)

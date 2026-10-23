@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.xpi binary
+*.zip binary
+*.bundle binary
