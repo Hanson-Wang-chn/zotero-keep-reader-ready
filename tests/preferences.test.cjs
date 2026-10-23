@@ -14,7 +14,7 @@ test('preferences controls update real runtime options and live status', async (
   await env.settle();
   env.Zotero.KeepReaderReady = env.manager;
   const names = [
-    'pane', 'enabled', 'tabs', 'reapply', 'status', 'version', 'errors'
+    'pane', 'enabled', 'tabs', 'preload', 'preload-status', 'reapply', 'status', 'version', 'errors'
   ];
   const elements = Object.fromEntries(names.map(name => ['keep-reader-ready-' + name, {
     attributes: {}, isConnected: true, listeners: {},
@@ -32,12 +32,15 @@ test('preferences controls update real runtime options and live status', async (
   win.KeepReaderReadyPreferences.init(win);
   const master = elements['keep-reader-ready-enabled'];
   const tabs = elements['keep-reader-ready-tabs'];
+  const preload = elements['keep-reader-ready-preload'];
   assert.equal(master.checked, true);
+  assert.equal(preload.checked, false);
   assert.match(elements['keep-reader-ready-status'].textContent, /1 \/ 1/);
   master.checked = false;
   master.listeners.command();
   assert.equal(env.manager.enabled, false);
   assert.equal(tabs.disabled, true);
+  assert.equal(preload.disabled, true);
   assert.match(elements['keep-reader-ready-status'].textContent, /已关闭/);
   master.checked = true;
   master.listeners.command();
@@ -46,6 +49,12 @@ test('preferences controls update real runtime options and live status', async (
   tabs.checked = false;
   tabs.listeners.command();
   assert.equal(env.manager.keepTabsLoaded, false);
+  preload.checked = true;
+  preload.listeners.command();
+  assert.equal(env.manager.preloadWholePDF, true);
+  preload.checked = false;
+  preload.listeners.command();
+  assert.equal(env.manager.preloadWholePDF, false);
   await elements['keep-reader-ready-reapply'].listeners.command();
   assert.equal(env.manager.getStatus().protectedReaders, 1);
   assert.equal(env.manager.listeners.size, 1);

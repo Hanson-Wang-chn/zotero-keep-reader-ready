@@ -1,10 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 /* No network, database writes, idle loops, or periodic keep-alive timers. */
 var KeepReaderReadyRuntime = class KeepReaderReadyRuntime {
-  constructor({ Zotero, Services, Components }) {
+  constructor({ Zotero, Services, Components, Preloader }) {
     this.Zotero = Zotero;
     this.Services = Services;
     this.Components = Components;
+    this.Preloader = Preloader;
+    this.preloadRecords = new WeakMap();
     this.branch = "extensions.zotero.keepReaderReady.";
     this.alive = false;
     this.readerRecords = new WeakMap();
@@ -25,8 +27,12 @@ var KeepReaderReadyRuntime = class KeepReaderReadyRuntime {
     return this.Services.prefs.getBoolPref(this.branch + "keepTabsLoaded", true);
   }
 
+  get preloadWholePDF() {
+    return this.Services.prefs.getBoolPref(this.branch + "preloadWholePDF", false);
+  }
+
   setOption(name, value) {
-    if (!["enabled", "keepTabsLoaded"].includes(name)) throw new Error("Unknown option");
+    if (!["enabled", "keepTabsLoaded", "preloadWholePDF"].includes(name)) throw new Error("Unknown option");
     this.Services.prefs.setBoolPref(this.branch + name, Boolean(value));
   }
 
@@ -136,7 +142,9 @@ var KeepReaderReadyRuntime = class KeepReaderReadyRuntime {
       await outer._initPromise;
       if (!this.alive || !this.enabled || outer._isUninitialized
           || !this.Zotero.Reader._readers.includes(outer)) return false;
-      return this.patchReader(outer);
+      const protectedReader = this.patchReader(outer);
+      if (this.preloadWholePDF) this.startPreload(outer);
+      return protectedReader;
     } catch (error) {
       if (this.alive && !outer._isUninitialized) this.report(error);
       return false;
@@ -144,6 +152,31 @@ var KeepReaderReadyRuntime = class KeepReaderReadyRuntime {
       this.pendingReaders.delete(outer);
       if (this.alive) this.emit();
     }
+  }
+
+  startPreload(outer) {
+    if (!this.alive || !this.enabled || !this.preloadWholePDF) return;
+    const current = this.preloadRecords.get(outer);
+    if (current && !current.stopped) return;
+    if (!this.Preloader) {
+      this.report("未加载全文预加载组件；原有功能仍可正常使用。");
+      return;
+    }
+    const job = new this.Preloader({
+      outer, Components: this.Components,
+      isActive: () => this.alive && this.enabled && this.preloadWholePDF
+        && this.Zotero.Reader._readers.includes(outer),
+      onChange: () => this.alive && this.emit(),
+      onError: error => this.report(error)
+    });
+    this.preloadRecords.set(outer, job);
+    job.start().catch(error => this.alive && this.report(error));
+  }
+
+  stopPreload(outer) {
+    const job = this.preloadRecords.get(outer);
+    job?.stop();
+    this.preloadRecords.delete(outer);
   }
 
   patchReader(outer) {
@@ -218,6 +251,9 @@ var KeepReaderReadyRuntime = class KeepReaderReadyRuntime {
 
   refresh() {
     if (!this.alive) return;
+    if (!this.enabled || !this.preloadWholePDF) {
+      for (const reader of this.Zotero.Reader._readers.slice()) this.stopPreload(reader);
+    }
     if (this.enabled) this.applyToAll();
     else {
       for (const reader of this.Zotero.Reader._readers.slice()) this.restoreReader(reader);
@@ -228,14 +264,26 @@ var KeepReaderReadyRuntime = class KeepReaderReadyRuntime {
 
   getStatus() {
     let loaded = 0, protectedReaders = 0;
+    const preload = { ready: 0, total: 0, waiting: 0, documents: 0, failed: 0 };
     for (const outer of this.Zotero.Reader._readers) {
       if (outer.type !== "pdf" || outer._isUninitialized) continue;
       loaded++;
       if (outer._internalReader && this.readerRecords.has(outer._internalReader)) protectedReaders++;
+      const job = this.preloadRecords.get(outer);
+      if (job) {
+        const status = job.getStatus();
+        preload.documents++;
+        preload.ready += status.ready;
+        preload.total += status.total;
+        preload.failed += status.failed;
+        if (status.phase === "waiting") preload.waiting++;
+      }
     }
     return {
       enabled: this.alive && this.enabled,
       keepTabsLoaded: this.keepTabsLoaded,
+      preloadWholePDF: this.preloadWholePDF,
+      preload,
       version: this.Zotero.version,
       loaded, protectedReaders,
       protectedWindows: [...this.windows.values()].filter(record => !!record.wrapper).length,
@@ -258,6 +306,7 @@ var KeepReaderReadyRuntime = class KeepReaderReadyRuntime {
     if (!this.alive) return;
     this.alive = false;
     this.Services.prefs.removeObserver(this.branch, this.prefObserver);
+    for (const outer of this.Zotero.Reader._readers.slice()) this.stopPreload(outer);
     for (const outer of this.Zotero.Reader._readers.slice()) this.restoreReader(outer);
     for (const win of [...this.windows.keys()]) this.removeWindow(win);
     if (this.openRecord) {

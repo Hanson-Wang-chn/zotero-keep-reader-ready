@@ -7,8 +7,11 @@ function uninstall() {}
 
 async function startup({ id, version, rootURI }) {
   runtimeScope = { Zotero, Services, Components };
+  Services.scriptloader.loadSubScript(rootURI + "full-preload.js", runtimeScope);
   Services.scriptloader.loadSubScript(rootURI + "runtime.js", runtimeScope);
-  runtime = new runtimeScope.KeepReaderReadyRuntime({ Zotero, Services, Components });
+  runtime = new runtimeScope.KeepReaderReadyRuntime({
+    Zotero, Services, Components, Preloader: runtimeScope.KeepReaderReadyPreloader
+  });
   runtime.start();
   Zotero.KeepReaderReady = runtime;
   try {

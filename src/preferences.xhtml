@@ -9,18 +9,22 @@
     <description class="keep-reader-ready-detail">阻止阅读器因隐藏、切换桌面或切到其他标签页而主动清理页面绘图缓存。</description>
     <checkbox id="keep-reader-ready-tabs" label="同时防止 PDF 标签页自动卸载"/>
     <description class="keep-reader-ready-detail">适合同时阅读多篇论文。已加载的 PDF 标签页将保持加载；手动关闭标签页仍正常释放资源。</description>
+    <checkbox id="keep-reader-ready-preload" label="打开后预加载整篇 PDF（增加内存占用）"/>
+    <description class="keep-reader-ready-detail">按当前缩放比例逐页预渲染文字和图片，并保留页面结果。当前可见页优先，不改变阅读位置；首次打开会增加计算量。</description>
   </groupbox>
   <groupbox>
     <label><html:h2>运行状态</html:h2></label>
     <description id="keep-reader-ready-status" role="status" aria-live="polite">正在读取状态…</description>
     <description id="keep-reader-ready-version"/>
+    <description id="keep-reader-ready-preload-status" role="status" aria-live="polite"/>
     <description id="keep-reader-ready-errors" hidden="true"/>
     <hbox><button id="keep-reader-ready-reapply" label="重新应用并检查"/></hbox>
   </groupbox>
   <groupbox>
     <label><html:h2>使用说明</html:h2></label>
     <description>设置立即生效，重启后会记住选择。关闭上方总开关，或在插件管理中禁用本插件，即恢复 Zotero 原有行为。</description>
-    <description>安装前已被卸载的 PDF，请先点开一次；插件不会预先打开所有论文，也不会把整篇文档的所有页面一次性渲染到内存。</description>
+    <description>安装前已被卸载的 PDF，请先点开一次。开启全文预加载也会应用到已打开的 PDF；不会自动打开文献库中的其他论文。</description>
+    <description>关闭全文预加载会停止后续预渲染，并释放额外保留的远处页面。原有页面缓存保护和标签页常驻选项不变。</description>
     <description>内存占用会增加。窗口缩放、改变缩放比例及 PDF 阅读器自身正常的页面缓存淘汰仍可能触发重绘。</description>
     <description>按 Zotero 10.0.6 的接口编写，目标系统为 macOS 27.0.1。未在真实 Mac 环境完成端到端实测。</description>
   </groupbox>

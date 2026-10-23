@@ -45,7 +45,7 @@ def main():
     version = manifest["version"]
     for filename in ["preferences.xhtml", "icon.svg"]:
         ET.parse(SOURCE / filename)
-    for filename in ["bootstrap.js", "runtime.js", "preferences-controller.js", "prefs.js"]:
+    for filename in ["bootstrap.js", "runtime.js", "full-preload.js", "preferences-controller.js", "prefs.js"]:
         subprocess.run(["node", "--check", str(SOURCE / filename)], check=True)
     DIST.mkdir(exist_ok=True)
     xpi = DIST / f"keep-reader-ready-{version}.xpi"

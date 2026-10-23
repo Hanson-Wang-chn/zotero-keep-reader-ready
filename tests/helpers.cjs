@@ -6,10 +6,11 @@ const runtimeSource = fs.readFileSync(path.join(__dirname, '../src/runtime.js'),
 const enginePath = path.join(__dirname, '../research/zotero-engine-5802d14.js');
 const tabsPath = path.join(__dirname, '../research/zotero-tabs-10.0.6.js');
 
-function makeEnvironment({ enabled = true, keepTabsLoaded = true } = {}) {
+function makeEnvironment({ enabled = true, keepTabsLoaded = true, preloadWholePDF = false } = {}) {
   const values = new Map([
     ['extensions.zotero.keepReaderReady.enabled', enabled],
-    ['extensions.zotero.keepReaderReady.keepTabsLoaded', keepTabsLoaded]
+    ['extensions.zotero.keepReaderReady.keepTabsLoaded', keepTabsLoaded],
+    ['extensions.zotero.keepReaderReady.preloadWholePDF', preloadWholePDF]
   ]);
   const observers = new Set();
   const errors = [];
@@ -46,8 +47,11 @@ function makeEnvironment({ enabled = true, keepTabsLoaded = true } = {}) {
   }}};
   const windows = [];
   const context = vm.createContext({ Zotero, Services, Components });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../src/full-preload.js'), 'utf8'), context);
   vm.runInContext(runtimeSource, context);
-  const manager = new context.KeepReaderReadyRuntime({ Zotero, Services, Components });
+  const manager = new context.KeepReaderReadyRuntime({
+    Zotero, Services, Components, Preloader: context.KeepReaderReadyPreloader
+  });
 
   function makeReader({ id = 'pdf-1', type = 'pdf', hidden = false, delayed = false } = {}) {
     let sequence = 0;
@@ -133,6 +137,7 @@ function makeEnvironment({ enabled = true, keepTabsLoaded = true } = {}) {
   }
   return {
     manager, Zotero, Services, Components, errors, windows, observers,
+    Preloader: context.KeepReaderReadyPreloader,
     makeReader, makeWindow, settle, values,
     get exportCount() { return exports; },
     realPinnedSource: fs.existsSync(enginePath) && fs.existsSync(tabsPath)
