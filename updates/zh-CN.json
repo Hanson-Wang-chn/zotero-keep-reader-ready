@@ -1,7 +1,30 @@
 {
   "addons": {
     "keep-reader-ready@local.invalid": {
-      "updates": []
+      "updates": [
+        {
+          "version": "1.1.1",
+          "update_link": "https://github.com/Hanson-Wang-chn/zotero-keep-reader-ready/releases/download/v1.1.1/keep-reader-ready-1.1.1-zh-CN.xpi",
+          "update_hash": "sha256:045567493fb9ef546aa11bb9b1972bf3a3e86ef275ee0941c5cc903d60d8b2ae",
+          "applications": {
+            "zotero": {
+              "strict_min_version": "10.0.6",
+              "strict_max_version": "10.0.*"
+            }
+          }
+        },
+        {
+          "version": "1.2.0",
+          "update_link": "https://github.com/Hanson-Wang-chn/zotero-keep-reader-ready/releases/download/v1.2.0/keep-reader-ready-1.2.0-zh-CN.xpi",
+          "update_hash": "sha256:1e2abb576f7b39012cebee55d66eb00a280d40646b574d317aedc0c9fade049a",
+          "applications": {
+            "zotero": {
+              "strict_min_version": "10.0.6",
+              "strict_max_version": "10.0.*"
+            }
+          }
+        }
+      ]
     }
   }
 }
